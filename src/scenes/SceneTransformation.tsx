@@ -1,145 +1,212 @@
-import React from "react";
+import React from 'react';
 import {
   AbsoluteFill,
   useCurrentFrame,
   useVideoConfig,
   interpolate,
   spring,
-  Easing,
-} from "remotion";
-import { COLORS } from "../colors";
+} from 'remotion';
+import { GlassCard } from '../components/GlassCard';
+import { AnimatedCounter } from '../components/AnimatedCounter';
 
-type StatBlockProps = {
-  value: string;
-  label: string;
-  color: string;
-  frame: number;
-  fps: number;
-  delay: number;
+const COLORS = {
+  background: '#080D18',
+  white: '#FFFFFF',
+  softWhite: 'rgba(255,255,255,0.92)',
+  muted: 'rgba(255,255,255,0.55)',
+  subtle: 'rgba(255,255,255,0.28)',
+  dim: 'rgba(255,255,255,0.10)',
+  cyan: '#00D4FF',
+  violet: '#7B2FFF',
+  googleBlue: '#4285F4',
+  googleGreen: '#34A853',
+  fontDisplay: "'Montserrat', 'Arial Black', Arial, sans-serif",
+  fontBody: "'Inter', Arial, sans-serif",
 };
 
-const StatBlock: React.FC<StatBlockProps> = ({ value, label, color, frame, fps, delay }) => {
-  const s = spring({ frame: frame - delay, fps, config: { damping: 200 } });
-  const opacity = interpolate(s, [0, 1], [0, 1]);
-  const scale = interpolate(s, [0, 1], [0.7, 1]);
+interface StatCardProps {
+  children: React.ReactNode;
+  label: string;
+  accentColor: string;
+  delay: number;
+  frame: number;
+  fps: number;
+}
+
+const StatCard: React.FC<StatCardProps> = ({
+  children,
+  label,
+  accentColor,
+  delay,
+  frame,
+  fps,
+}) => {
+  const s = spring({
+    frame: Math.max(0, frame - delay),
+    fps,
+    config: { damping: 18, stiffness: 140, mass: 0.9 },
+    durationInFrames: 40,
+  });
+
+  const scale = interpolate(s, [0, 1], [0.5, 1], {
+    extrapolateLeft: 'clamp',
+    extrapolateRight: 'clamp',
+  });
+
+  const opacity = interpolate(s, [0, 1], [0, 1], {
+    extrapolateLeft: 'clamp',
+    extrapolateRight: 'clamp',
+  });
 
   return (
     <div
       style={{
-        opacity,
         transform: `scale(${scale})`,
-        textAlign: "center",
-        padding: "32px 24px",
-        background: "rgba(255,255,255,0.03)",
-        border: `1px solid rgba(255,255,255,0.08)`,
-        borderRadius: 20,
-        borderBottom: `3px solid ${color}`,
+        opacity,
         flex: 1,
       }}
     >
-      <div
-        style={{
-          fontSize: 56,
-          fontWeight: 900,
-          color,
-          fontFamily: "'Arial Black', Arial, sans-serif",
-          lineHeight: 1,
-          marginBottom: 10,
-        }}
+      <GlassCard
+        accentColor={accentColor}
+        accentPosition="top"
+        glowColor={`${accentColor}18`}
+        padding={24}
+        style={{ textAlign: 'center', height: '100%', boxSizing: 'border-box' }}
       >
-        {value}
-      </div>
-      <div
-        style={{
-          fontSize: 15,
-          color: COLORS.offWhite,
-          fontFamily: "Arial, sans-serif",
-          lineHeight: 1.4,
-        }}
-      >
-        {label}
-      </div>
+        <div
+          style={{
+            fontFamily: COLORS.fontDisplay,
+            fontSize: 38,
+            fontWeight: 900,
+            color: accentColor,
+            lineHeight: 1,
+            marginBottom: 8,
+          }}
+        >
+          {children}
+        </div>
+        <div
+          style={{
+            fontFamily: COLORS.fontBody,
+            fontSize: 12,
+            color: COLORS.muted,
+            lineHeight: 1.4,
+          }}
+        >
+          {label}
+        </div>
+      </GlassCard>
     </div>
   );
 };
 
-type ProcessStepProps = {
-  num: string;
+interface StepProps {
+  number: string;
   title: string;
-  desc: string;
+  description: string;
+  accentColor: string;
+  delay: number;
   frame: number;
   fps: number;
-  delay: number;
-  isLast?: boolean;
-};
+  showConnector?: boolean;
+}
 
-const ProcessStep: React.FC<ProcessStepProps> = ({ num, title, desc, frame, fps, delay, isLast }) => {
-  const s = spring({ frame: frame - delay, fps, config: { damping: 200 } });
-  const opacity = interpolate(s, [0, 1], [0, 1]);
-  const x = interpolate(s, [0, 1], [-30, 0]);
+const ProcessStep: React.FC<StepProps> = ({
+  number,
+  title,
+  description,
+  accentColor,
+  delay,
+  frame,
+  fps,
+  showConnector,
+}) => {
+  const s = spring({
+    frame: Math.max(0, frame - delay),
+    fps,
+    config: { damping: 22, stiffness: 120, mass: 1 },
+    durationInFrames: 40,
+  });
+
+  const translateX = interpolate(s, [0, 1], [-30, 0], {
+    extrapolateLeft: 'clamp',
+    extrapolateRight: 'clamp',
+  });
+
+  const opacity = interpolate(s, [0, 1], [0, 1], {
+    extrapolateLeft: 'clamp',
+    extrapolateRight: 'clamp',
+  });
 
   return (
     <div
       style={{
+        transform: `translateX(${translateX}px)`,
         opacity,
-        transform: `translateX(${x}px)`,
-        display: "flex",
-        gap: 20,
-        alignItems: "flex-start",
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 0,
       }}
     >
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-        <div
-          style={{
-            width: 44,
-            height: 44,
-            borderRadius: "50%",
-            background: `linear-gradient(135deg, ${COLORS.lightBlue}, ${COLORS.cyan})`,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: 16,
-            fontWeight: 900,
-            color: COLORS.white,
-            fontFamily: "Arial, sans-serif",
-            flexShrink: 0,
-          }}
-        >
-          {num}
-        </div>
-        {!isLast && (
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16 }}>
+        {/* Number circle */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           <div
             style={{
-              width: 2,
-              flex: 1,
-              minHeight: 30,
-              background: "rgba(255,255,255,0.1)",
-              margin: "6px 0",
+              width: 44,
+              height: 44,
+              borderRadius: '50%',
+              background: `linear-gradient(135deg, ${accentColor}CC, ${accentColor}44)`,
+              border: `2px solid ${accentColor}80`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontFamily: COLORS.fontDisplay,
+              fontSize: 14,
+              fontWeight: 800,
+              color: COLORS.white,
+              flexShrink: 0,
+              boxShadow: `0 0 16px ${accentColor}40`,
             }}
-          />
-        )}
-      </div>
-      <div style={{ paddingBottom: isLast ? 0 : 20 }}>
-        <div
-          style={{
-            fontSize: 18,
-            fontWeight: 700,
-            color: COLORS.white,
-            fontFamily: "Arial, sans-serif",
-            marginBottom: 4,
-          }}
-        >
-          {title}
+          >
+            {number}
+          </div>
+          {showConnector && (
+            <div
+              style={{
+                width: 1,
+                flex: 1,
+                minHeight: 20,
+                background: `repeating-linear-gradient(to bottom, ${accentColor}50 0px, ${accentColor}50 4px, transparent 4px, transparent 8px)`,
+                marginTop: 6,
+              }}
+            />
+          )}
         </div>
-        <div
-          style={{
-            fontSize: 14,
-            color: COLORS.gray,
-            fontFamily: "Arial, sans-serif",
-            lineHeight: 1.5,
-          }}
-        >
-          {desc}
+
+        {/* Content */}
+        <div style={{ paddingBottom: showConnector ? 16 : 0 }}>
+          <div
+            style={{
+              fontFamily: COLORS.fontDisplay,
+              fontSize: 15,
+              fontWeight: 700,
+              color: COLORS.softWhite,
+              marginBottom: 4,
+            }}
+          >
+            {title}
+          </div>
+          <div
+            style={{
+              fontFamily: COLORS.fontBody,
+              fontSize: 12,
+              color: COLORS.muted,
+              lineHeight: 1.55,
+            }}
+          >
+            {description}
+          </div>
         </div>
       </div>
     </div>
@@ -150,154 +217,251 @@ export const SceneTransformation: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
-  const titleS = spring({ frame, fps, config: { damping: 200 } });
-  const titleOpacity = interpolate(titleS, [0, 1], [0, 1]);
-  const titleY = interpolate(titleS, [0, 1], [40, 0]);
-
-  const lineW = interpolate(frame, [5, 35], [0, 100], {
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp",
-    easing: Easing.inOut(Easing.quad),
+  const headerSpring = spring({
+    frame,
+    fps,
+    config: { damping: 20, stiffness: 110, mass: 1 },
+    durationInFrames: 45,
   });
 
-  const stats = [
-    { value: "+180", label: "Empresas transformadas digitalmente", color: COLORS.googleBlue, delay: 30 },
-    { value: "100%", label: "Compromiso con cada cliente", color: COLORS.cyan, delay: 45 },
-    { value: "24/7", label: "Soporte técnico especializado", color: COLORS.lightBlue, delay: 60 },
-    { value: "#1", label: "Google Cloud Premier en España", color: COLORS.googleGreen, delay: 75 },
-  ];
+  const headerOpacity = interpolate(headerSpring, [0, 1], [0, 1], {
+    extrapolateLeft: 'clamp',
+    extrapolateRight: 'clamp',
+  });
+
+  const headerY = interpolate(headerSpring, [0, 1], [30, 0], {
+    extrapolateLeft: 'clamp',
+    extrapolateRight: 'clamp',
+  });
 
   const steps = [
-    { num: "01", title: "Consultoría Estratégica", desc: "Analizamos tu negocio y diseñamos una hoja de ruta personalizada", delay: 35 },
-    { num: "02", title: "Implementación Cloud", desc: "Migramos y configuramos tu infraestructura con cero interrupciones", delay: 50 },
-    { num: "03", title: "Seguridad y Cumplimiento", desc: "Protegemos tus datos con las mejores prácticas del sector", delay: 65 },
-    { num: "04", title: "Soporte Continuo", desc: "Acompañamiento permanente para maximizar tu inversión tecnológica", delay: 80 },
+    {
+      number: '01',
+      title: 'Consultoría Estratégica',
+      description: 'Analizamos tu negocio y diseñamos tu hoja de ruta',
+      accentColor: COLORS.googleBlue,
+      delay: 55,
+    },
+    {
+      number: '02',
+      title: 'Implementación Cloud',
+      description: 'Migramos tu infraestructura con cero interrupciones',
+      accentColor: COLORS.cyan,
+      delay: 65,
+    },
+    {
+      number: '03',
+      title: 'BeSafe Security',
+      description: 'Protegemos tus datos con las mejores prácticas',
+      accentColor: COLORS.violet,
+      delay: 75,
+    },
+    {
+      number: '04',
+      title: 'Soporte Continuo',
+      description: 'Acompañamiento permanente para maximizar tu ROI',
+      accentColor: COLORS.googleGreen,
+      delay: 85,
+    },
   ];
 
   return (
     <AbsoluteFill
       style={{
-        background: `linear-gradient(150deg, #08101E 0%, ${COLORS.darkNavy} 60%, #0C1825 100%)`,
+        background: COLORS.background,
+        overflow: 'hidden',
+        fontFamily: COLORS.fontBody,
       }}
     >
-      {/* Background glow */}
+      {/* Background cyan glow bottom-right */}
       <div
         style={{
-          position: "absolute",
-          right: -100,
-          top: "50%",
-          transform: "translateY(-50%)",
-          width: 700,
-          height: 700,
-          borderRadius: "50%",
-          background: `radial-gradient(circle, ${COLORS.cyan}18 0%, transparent 70%)`,
-          filter: "blur(80px)",
+          position: 'absolute',
+          right: -150,
+          bottom: -150,
+          width: 600,
+          height: 600,
+          borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(0,212,255,0.08) 0%, transparent 70%)',
+          pointerEvents: 'none',
         }}
       />
 
       {/* Header */}
       <div
         style={{
-          position: "absolute",
-          top: 50,
-          left: 80,
-          opacity: titleOpacity,
-          transform: `translateY(${titleY}px)`,
+          position: 'absolute',
+          top: 48,
+          left: 0,
+          right: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: 10,
+          transform: `translateY(${headerY}px)`,
+          opacity: headerOpacity,
         }}
       >
         <span
           style={{
-            fontSize: 13,
-            letterSpacing: 4,
-            color: COLORS.googleGreen,
-            fontFamily: "Arial, sans-serif",
-            textTransform: "uppercase",
+            fontFamily: COLORS.fontBody,
+            fontSize: 11,
             fontWeight: 600,
+            letterSpacing: '0.28em',
+            color: COLORS.cyan,
+            textTransform: 'uppercase',
           }}
         >
-          Transformación Digital
+          TRANSFORMACIÓN DIGITAL
         </span>
-        <h2
-          style={{
-            fontSize: 52,
-            fontWeight: 900,
-            color: COLORS.white,
-            fontFamily: "'Arial Black', Arial, sans-serif",
-            margin: "8px 0 0 0",
-            lineHeight: 1.1,
-          }}
-        >
-          Tu negocio,{" "}
-          <span style={{ color: COLORS.cyan }}>potenciado</span>
-          <br />
-          por la tecnología
-        </h2>
         <div
           style={{
-            width: lineW + "%",
-            height: 2,
-            background: `linear-gradient(90deg, ${COLORS.cyan}, transparent)`,
-            marginTop: 12,
-            maxWidth: 500,
+            fontFamily: COLORS.fontDisplay,
+            fontSize: 40,
+            fontWeight: 900,
+            color: COLORS.white,
+            lineHeight: 1.1,
+            letterSpacing: '-0.02em',
+            textAlign: 'center',
           }}
-        />
+        >
+          Resultados que{' '}
+          <span style={{ color: COLORS.cyan }}>hablan por sí solos</span>
+        </div>
       </div>
 
       {/* Stats row */}
       <div
         style={{
-          position: "absolute",
-          left: 80,
-          right: 80,
-          top: 230,
-          display: "flex",
+          position: 'absolute',
+          top: 210,
+          left: 48,
+          right: 48,
+          display: 'flex',
           gap: 16,
+          height: 120,
         }}
       >
-        {stats.map((s) => (
-          <StatBlock key={s.label} {...s} frame={frame} fps={fps} />
-        ))}
+        <StatCard
+          label="Empresas transformadas"
+          accentColor={COLORS.googleBlue}
+          delay={30}
+          frame={frame}
+          fps={fps}
+        >
+          <AnimatedCounter
+            from={0}
+            to={180}
+            prefix="+"
+            startFrame={30}
+            style={{ fontFamily: COLORS.fontDisplay, fontSize: 38, fontWeight: 900, color: COLORS.googleBlue }}
+          />
+        </StatCard>
+
+        <StatCard
+          label="Compromiso con el cliente"
+          accentColor={COLORS.cyan}
+          delay={45}
+          frame={frame}
+          fps={fps}
+        >
+          <AnimatedCounter
+            from={0}
+            to={100}
+            suffix="%"
+            startFrame={45}
+            style={{ fontFamily: COLORS.fontDisplay, fontSize: 38, fontWeight: 900, color: COLORS.cyan }}
+          />
+        </StatCard>
+
+        <StatCard
+          label="Soporte especializado"
+          accentColor={COLORS.cyan}
+          delay={58}
+          frame={frame}
+          fps={fps}
+        >
+          <span style={{ fontFamily: COLORS.fontDisplay, fontSize: 38, fontWeight: 900, color: COLORS.cyan }}>
+            24/7
+          </span>
+        </StatCard>
+
+        <StatCard
+          label="Google Cloud Premier España"
+          accentColor={COLORS.googleGreen}
+          delay={60}
+          frame={frame}
+          fps={fps}
+        >
+          <AnimatedCounter
+            from={0}
+            to={8}
+            prefix="#"
+            startFrame={60}
+            style={{ fontFamily: COLORS.fontDisplay, fontSize: 38, fontWeight: 900, color: COLORS.googleGreen }}
+          />
+        </StatCard>
       </div>
 
-      {/* Process steps */}
+      {/* Process steps - 2 columns */}
       <div
         style={{
-          position: "absolute",
-          left: 80,
-          right: 80,
-          top: 460,
-          bottom: 60,
-          display: "flex",
-          gap: 60,
+          position: 'absolute',
+          bottom: 40,
+          left: 48,
+          right: 48,
+          top: 360,
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr',
+          gap: '0 48px',
         }}
       >
-        <div style={{ flex: 1 }}>
-          <div
-            style={{
-              fontSize: 13,
-              letterSpacing: 3,
-              color: COLORS.gray,
-              fontFamily: "Arial, sans-serif",
-              textTransform: "uppercase",
-              marginBottom: 24,
-              opacity: interpolate(frame, [25, 45], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" }),
-            }}
-          >
-            Nuestro Proceso
-          </div>
-          <div style={{ display: "flex", flexDirection: "column" }}>
-            {steps.slice(0, 2).map((s, i) => (
-              <ProcessStep key={s.num} {...s} frame={frame} fps={fps} isLast={i === 1} />
-            ))}
-          </div>
+        {/* Left column: steps 1 & 2 */}
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <ProcessStep
+            number={steps[0].number}
+            title={steps[0].title}
+            description={steps[0].description}
+            accentColor={steps[0].accentColor}
+            delay={steps[0].delay}
+            frame={frame}
+            fps={fps}
+            showConnector
+          />
+          <ProcessStep
+            number={steps[1].number}
+            title={steps[1].title}
+            description={steps[1].description}
+            accentColor={steps[1].accentColor}
+            delay={steps[1].delay}
+            frame={frame}
+            fps={fps}
+            showConnector={false}
+          />
         </div>
-        <div style={{ flex: 1 }}>
-          <div style={{ height: 37 }} />
-          <div style={{ display: "flex", flexDirection: "column" }}>
-            {steps.slice(2).map((s, i) => (
-              <ProcessStep key={s.num} {...s} frame={frame} fps={fps} isLast={i === 1} />
-            ))}
-          </div>
+
+        {/* Right column: steps 3 & 4 */}
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <ProcessStep
+            number={steps[2].number}
+            title={steps[2].title}
+            description={steps[2].description}
+            accentColor={steps[2].accentColor}
+            delay={steps[2].delay}
+            frame={frame}
+            fps={fps}
+            showConnector
+          />
+          <ProcessStep
+            number={steps[3].number}
+            title={steps[3].title}
+            description={steps[3].description}
+            accentColor={steps[3].accentColor}
+            delay={steps[3].delay}
+            frame={frame}
+            fps={fps}
+            showConnector={false}
+          />
         </div>
       </div>
     </AbsoluteFill>

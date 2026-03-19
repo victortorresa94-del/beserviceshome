@@ -8,10 +8,12 @@
     "upgrade": "remotion upgrade"
   },
   "dependencies": {
+    "@fal-ai/client": "^1.9.4",
+    "@remotion/google-fonts": "4.0.257",
     "@remotion/transitions": "4.0.257",
-    "remotion": "4.0.257",
     "react": "18.3.1",
-    "react-dom": "18.3.1"
+    "react-dom": "18.3.1",
+    "remotion": "4.0.257"
   },
   "devDependencies": {
     "@remotion/cli": "4.0.257",

@@ -1,4 +1,4 @@
-import React from "react";
+import React from 'react';
 import {
   AbsoluteFill,
   useCurrentFrame,
@@ -6,97 +6,170 @@ import {
   interpolate,
   spring,
   Easing,
-  Sequence,
-} from "remotion";
-import { COLORS } from "../colors";
+} from 'remotion';
+import { GlassCard } from '../components/GlassCard';
+import { AnimatedCounter } from '../components/AnimatedCounter';
 
-type FeatureCardProps = {
-  icon: string;
-  title: string;
-  desc: string;
-  color: string;
-  frame: number;
-  fps: number;
-  delay: number;
+const COLORS = {
+  background: '#080D18',
+  white: '#FFFFFF',
+  softWhite: 'rgba(255,255,255,0.92)',
+  muted: 'rgba(255,255,255,0.55)',
+  microsoftBlue: '#0078D4',
+  microsoftPurple: '#7719AA',
+  microsoftGreen: '#7FBA00',
+  cyan: '#00D4FF',
+  fontDisplay: "'Montserrat', 'Arial Black', Arial, sans-serif",
+  fontBody: "'Inter', Arial, sans-serif",
 };
 
-const FeatureCard: React.FC<FeatureCardProps> = ({ icon, title, desc, color, frame, fps, delay }) => {
-  const s = spring({ frame: frame - delay, fps, config: { damping: 200 } });
-  const opacity = interpolate(s, [0, 1], [0, 1]);
-  const y = interpolate(s, [0, 1], [40, 0]);
+const MicrosoftLogoSVG: React.FC = () => (
+  <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+    <rect x="0" y="0" width="16" height="16" fill="#F25022" />
+    <rect x="20" y="0" width="16" height="16" fill="#7FBA00" />
+    <rect x="0" y="20" width="16" height="16" fill="#00A4EF" />
+    <rect x="20" y="20" width="16" height="16" fill="#FFB900" />
+  </svg>
+);
+
+interface ShieldSVGProps {
+  progress: number;
+  glowScale: number;
+}
+
+const ShieldSVG: React.FC<ShieldSVGProps> = ({ progress, glowScale }) => {
+  const dashOffset = interpolate(progress, [0, 1], [220, 0], {
+    extrapolateLeft: 'clamp',
+    extrapolateRight: 'clamp',
+  });
+  const checkOpacity = interpolate(progress, [0.6, 1], [0, 1], {
+    extrapolateLeft: 'clamp',
+    extrapolateRight: 'clamp',
+  });
 
   return (
     <div
       style={{
-        opacity,
-        transform: `translateY(${y}px)`,
-        background: "rgba(255,255,255,0.04)",
-        border: `1px solid rgba(255,255,255,0.1)`,
-        borderRadius: 16,
-        padding: "28px 24px",
-        flex: 1,
-        borderTop: `3px solid ${color}`,
+        position: 'relative',
+        width: 120,
+        height: 140,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
       }}
     >
-      <div style={{ fontSize: 36, marginBottom: 12 }}>{icon}</div>
       <div
         style={{
-          fontSize: 18,
-          fontWeight: 700,
-          color: COLORS.white,
-          fontFamily: "Arial, sans-serif",
-          marginBottom: 8,
+          position: 'absolute',
+          inset: -20,
+          borderRadius: '50%',
+          background: `radial-gradient(circle, rgba(0,120,212,${0.12 + glowScale * 0.18}) 0%, transparent 70%)`,
+          transform: `scale(${1 + glowScale * 0.08})`,
         }}
-      >
-        {title}
-      </div>
-      <div
-        style={{
-          fontSize: 14,
-          color: COLORS.gray,
-          fontFamily: "Arial, sans-serif",
-          lineHeight: 1.5,
-        }}
-      >
-        {desc}
-      </div>
+      />
+      <svg width="100" height="120" viewBox="0 0 100 120" fill="none">
+        <path
+          d="M50 5 L90 22 L90 55 C90 80 72 102 50 115 C28 102 10 80 10 55 L10 22 Z"
+          stroke={COLORS.microsoftBlue}
+          strokeWidth="3"
+          fill="rgba(0,120,212,0.08)"
+          strokeDasharray="220"
+          strokeDashoffset={dashOffset}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M35 58 L46 70 L68 45"
+          stroke={COLORS.microsoftBlue}
+          strokeWidth="4"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          opacity={checkOpacity}
+        />
+      </svg>
     </div>
   );
 };
 
-const ShieldIcon: React.FC<{ progress: number }> = ({ progress }) => {
-  const dashOffset = interpolate(progress, [0, 1], [200, 0]);
+interface FeatureCardProps {
+  icon: string;
+  title: string;
+  description: string;
+  accentColor: string;
+  delay: number;
+  frame: number;
+  fps: number;
+}
+
+const FeatureCard: React.FC<FeatureCardProps> = ({
+  icon,
+  title,
+  description,
+  accentColor,
+  delay,
+  frame,
+  fps,
+}) => {
+  const cardSpring = spring({
+    frame: Math.max(0, frame - delay),
+    fps,
+    config: { damping: 20, stiffness: 120, mass: 1 },
+    durationInFrames: 40,
+  });
+
+  const translateY = interpolate(cardSpring, [0, 1], [40, 0], {
+    extrapolateLeft: 'clamp',
+    extrapolateRight: 'clamp',
+  });
+
+  const opacity = interpolate(cardSpring, [0, 1], [0, 1], {
+    extrapolateLeft: 'clamp',
+    extrapolateRight: 'clamp',
+  });
+
   return (
-    <svg width="140" height="140" viewBox="0 0 100 100">
-      <defs>
-        <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor={COLORS.microsoftBlue} />
-          <stop offset="100%" stopColor={COLORS.cyan} />
-        </linearGradient>
-      </defs>
-      <path
-        d="M50 8 L85 22 L85 50 C85 68 68 82 50 90 C32 82 15 68 15 50 L15 22 Z"
-        fill="url(#shieldGrad)"
-        fillOpacity="0.15"
-        stroke="url(#shieldGrad)"
-        strokeWidth="2"
-        strokeDasharray="200"
-        strokeDashoffset={dashOffset}
-      />
-      <path
-        d="M35 50 L45 62 L65 40"
-        fill="none"
-        stroke={COLORS.cyan}
-        strokeWidth="4"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeDasharray="60"
-        strokeDashoffset={interpolate(progress, [0.3, 1], [60, 0], {
-          extrapolateLeft: "clamp",
-          extrapolateRight: "clamp",
-        })}
-      />
-    </svg>
+    <div
+      style={{
+        transform: `translateY(${translateY}px)`,
+        opacity,
+        height: '100%',
+      }}
+    >
+      <GlassCard
+        accentColor={accentColor}
+        accentPosition="left"
+        glowColor={`${accentColor}20`}
+        padding={20}
+        style={{ height: '100%', boxSizing: 'border-box' }}
+      >
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+          <span style={{ fontSize: 26, lineHeight: 1, flexShrink: 0 }}>{icon}</span>
+          <div>
+            <div
+              style={{
+                fontFamily: COLORS.fontDisplay,
+                fontWeight: 700,
+                fontSize: 14,
+                color: COLORS.softWhite,
+                marginBottom: 6,
+              }}
+            >
+              {title}
+            </div>
+            <div
+              style={{
+                fontFamily: COLORS.fontBody,
+                fontSize: 12,
+                color: COLORS.muted,
+                lineHeight: 1.55,
+              }}
+            >
+              {description}
+            </div>
+          </div>
+        </div>
+      </GlassCard>
+    </div>
   );
 };
 
@@ -104,211 +177,283 @@ export const SceneMicrosoft365: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
-  // Title animation
-  const titleSpring = spring({ frame, fps, config: { damping: 200 } });
-  const titleOpacity = interpolate(titleSpring, [0, 1], [0, 1]);
-  const titleY = interpolate(titleSpring, [0, 1], [-40, 0]);
-
-  // Shield progress
   const shieldProgress = interpolate(frame, [10, 60], [0, 1], {
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp",
-    easing: Easing.inOut(Easing.quad),
+    extrapolateLeft: 'clamp',
+    extrapolateRight: 'clamp',
+    easing: Easing.out(Easing.cubic),
   });
 
-  // Glow pulse
-  const glowScale = interpolate(
-    Math.sin((frame / fps) * Math.PI * 2),
-    [-1, 1],
-    [0.95, 1.05]
-  );
+  const glowScale = Math.sin(frame * 0.05) * 0.5 + 0.5;
 
-  const features = [
+  const leftPanelSpring = spring({
+    frame,
+    fps,
+    config: { damping: 18, stiffness: 100, mass: 1 },
+    durationInFrames: 50,
+  });
+
+  const leftPanelY = interpolate(leftPanelSpring, [0, 1], [40, 0], {
+    extrapolateLeft: 'clamp',
+    extrapolateRight: 'clamp',
+  });
+
+  const leftPanelOpacity = interpolate(leftPanelSpring, [0, 1], [0, 1], {
+    extrapolateLeft: 'clamp',
+    extrapolateRight: 'clamp',
+  });
+
+  const tagOpacity = interpolate(frame, [5, 20], [0, 1], {
+    extrapolateLeft: 'clamp',
+    extrapolateRight: 'clamp',
+  });
+
+  const features: Array<{
+    icon: string;
+    title: string;
+    description: string;
+    accentColor: string;
+    delay: number;
+  }> = [
     {
-      icon: "🔐",
-      title: "Azure AD Premium",
-      desc: "Identidad segura con MFA, SSO y acceso condicional para toda tu organización",
-      color: COLORS.microsoftBlue,
-      delay: 40,
+      icon: '🔐',
+      title: 'Azure AD Premium',
+      description: 'Identidad segura con MFA, SSO y acceso condicional',
+      accentColor: COLORS.microsoftBlue,
+      delay: 30,
     },
     {
-      icon: "🛡️",
-      title: "Microsoft Defender",
-      desc: "Protección avanzada contra amenazas, ransomware y ataques de día cero",
-      color: "#7FBA00",
-      delay: 55,
+      icon: '🛡️',
+      title: 'Microsoft Defender',
+      description: 'Protección avanzada contra amenazas y ransomware',
+      accentColor: COLORS.microsoftGreen,
+      delay: 45,
     },
     {
-      icon: "📧",
-      title: "Exchange + Purview",
-      desc: "Email seguro con DLP, cifrado de mensajes y compliance integrado",
-      color: COLORS.microsoftPurple,
-      delay: 70,
+      icon: '📧',
+      title: 'Exchange + Purview',
+      description: 'Email corporativo con DLP y compliance integrado',
+      accentColor: COLORS.microsoftPurple,
+      delay: 60,
     },
     {
-      icon: "☁️",
-      title: "Intune MDM/MAM",
-      desc: "Gestión de dispositivos móviles y aplicaciones desde la nube",
-      color: COLORS.cyan,
-      delay: 85,
+      icon: '☁️',
+      title: 'Intune MDM/MAM',
+      description: 'Gestión de dispositivos desde la nube',
+      accentColor: COLORS.cyan,
+      delay: 75,
     },
   ];
 
   return (
     <AbsoluteFill
       style={{
-        background: `linear-gradient(135deg, ${COLORS.darkNavy} 0%, #0D1F3C 60%, #0A1628 100%)`,
+        background: COLORS.background,
+        overflow: 'hidden',
+        fontFamily: COLORS.fontBody,
       }}
     >
-      {/* Left glow */}
+      {/* Background radial glow - left side */}
       <div
         style={{
-          position: "absolute",
-          left: "-10%",
-          top: "50%",
-          transform: "translateY(-50%)",
-          width: 600,
-          height: 600,
-          borderRadius: "50%",
-          background: `radial-gradient(circle, ${COLORS.microsoftBlue}33 0%, transparent 70%)`,
-          filter: "blur(60px)",
+          position: 'absolute',
+          left: -200,
+          top: '50%',
+          transform: 'translateY(-50%)',
+          width: 700,
+          height: 700,
+          borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(0,120,212,0.14) 0%, transparent 70%)',
+          pointerEvents: 'none',
         }}
       />
 
-      {/* Section tag */}
+      {/* Section tag top-left */}
       <div
         style={{
-          position: "absolute",
-          top: 50,
-          left: 80,
-          opacity: titleOpacity,
-          transform: `translateY(${titleY}px)`,
-          display: "flex",
-          alignItems: "center",
-          gap: 12,
+          position: 'absolute',
+          top: 40,
+          left: 56,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 10,
+          opacity: tagOpacity,
+          zIndex: 10,
         }}
       >
-        <div style={{ width: 4, height: 30, background: COLORS.microsoftBlue, borderRadius: 2 }} />
+        <div
+          style={{
+            width: 3,
+            height: 22,
+            background: COLORS.microsoftBlue,
+            borderRadius: 2,
+          }}
+        />
         <span
           style={{
-            fontSize: 13,
-            letterSpacing: 4,
-            color: COLORS.microsoftBlue,
-            fontFamily: "Arial, sans-serif",
-            textTransform: "uppercase",
+            fontFamily: COLORS.fontBody,
+            fontSize: 11,
             fontWeight: 600,
+            letterSpacing: '0.22em',
+            color: COLORS.microsoftBlue,
+            textTransform: 'uppercase',
           }}
         >
-          Seguridad Empresarial
+          SEGURIDAD EMPRESARIAL
         </span>
       </div>
 
-      {/* Left panel: shield + title */}
+      {/* Main content */}
       <div
         style={{
-          position: "absolute",
-          left: 80,
-          top: "50%",
-          transform: "translateY(-50%)",
-          width: 420,
+          position: 'absolute',
+          inset: 0,
+          display: 'flex',
+          alignItems: 'center',
+          padding: '88px 56px 48px',
+          gap: 56,
         }}
       >
-        {/* Microsoft 365 logo area */}
+        {/* Left Panel - 40% */}
         <div
           style={{
-            opacity: titleOpacity,
-            transform: `translateY(${titleY}px)`,
-            marginBottom: 30,
+            width: '40%',
+            flexShrink: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 24,
+            transform: `translateY(${leftPanelY}px)`,
+            opacity: leftPanelOpacity,
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 20 }}>
-            <svg width="48" height="48" viewBox="0 0 21 21">
-              <rect x="0" y="0" width="10" height="10" fill="#F25022" />
-              <rect x="11" y="0" width="10" height="10" fill="#7FBA00" />
-              <rect x="0" y="11" width="10" height="10" fill="#00A4EF" />
-              <rect x="11" y="11" width="10" height="10" fill="#FFB900" />
-            </svg>
+          {/* Logo + label */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            <MicrosoftLogoSVG />
             <span
               style={{
-                fontSize: 20,
-                color: COLORS.gray,
-                fontFamily: "Arial, sans-serif",
-                letterSpacing: 2,
-                textTransform: "uppercase",
+                fontFamily: COLORS.fontBody,
+                fontSize: 16,
+                fontWeight: 500,
+                color: COLORS.muted,
               }}
             >
               Microsoft 365
             </span>
           </div>
 
-          <h2
-            style={{
-              fontSize: 52,
-              fontWeight: 900,
-              color: COLORS.white,
-              fontFamily: "'Arial Black', Arial, sans-serif",
-              lineHeight: 1.1,
-              margin: 0,
-            }}
-          >
-            Seguridad
-            <br />
-            <span style={{ color: COLORS.microsoftBlue }}>Total</span>
-            <br />
-            en la Nube
-          </h2>
+          {/* Headline */}
+          <div>
+            <div
+              style={{
+                fontFamily: COLORS.fontDisplay,
+                fontSize: 50,
+                fontWeight: 900,
+                color: COLORS.white,
+                lineHeight: 1.05,
+                letterSpacing: '-0.02em',
+              }}
+            >
+              Seguridad Total
+            </div>
+            <div
+              style={{
+                fontFamily: COLORS.fontDisplay,
+                fontSize: 50,
+                fontWeight: 900,
+                color: COLORS.microsoftBlue,
+                lineHeight: 1.05,
+                letterSpacing: '-0.02em',
+              }}
+            >
+              en la Nube
+            </div>
+          </div>
+
+          {/* Shield */}
+          <div style={{ display: 'flex', justifyContent: 'flex-start', marginLeft: 8 }}>
+            <ShieldSVG progress={shieldProgress} glowScale={glowScale} />
+          </div>
+
+          {/* Stat blocks */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <GlassCard accentColor={COLORS.microsoftBlue} accentPosition="left" padding={16}>
+              <AnimatedCounter
+                from={0}
+                to={99.9}
+                decimals={1}
+                suffix="%"
+                startFrame={20}
+                style={{
+                  fontFamily: COLORS.fontDisplay,
+                  fontSize: 30,
+                  fontWeight: 800,
+                  color: COLORS.microsoftBlue,
+                  display: 'block',
+                }}
+              />
+              <div
+                style={{
+                  fontFamily: COLORS.fontBody,
+                  fontSize: 12,
+                  color: COLORS.muted,
+                  marginTop: 4,
+                }}
+              >
+                SLA disponibilidad
+              </div>
+            </GlassCard>
+
+            <GlassCard accentColor={COLORS.microsoftGreen} accentPosition="left" padding={16}>
+              <AnimatedCounter
+                from={0}
+                to={50000}
+                suffix="+"
+                startFrame={30}
+                style={{
+                  fontFamily: COLORS.fontDisplay,
+                  fontSize: 30,
+                  fontWeight: 800,
+                  color: COLORS.microsoftGreen,
+                  display: 'block',
+                }}
+              />
+              <div
+                style={{
+                  fontFamily: COLORS.fontBody,
+                  fontSize: 12,
+                  color: COLORS.muted,
+                  marginTop: 4,
+                }}
+              >
+                usuarios gestionados
+              </div>
+            </GlassCard>
+          </div>
         </div>
 
-        {/* Shield animated */}
+        {/* Right Panel - 55% */}
         <div
           style={{
-            transform: `scale(${glowScale})`,
-            display: "inline-block",
+            flex: 1,
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gridTemplateRows: '1fr 1fr',
+            gap: 16,
+            height: 420,
           }}
         >
-          <ShieldIcon progress={shieldProgress} />
+          {features.map((feature, i) => (
+            <FeatureCard
+              key={i}
+              icon={feature.icon}
+              title={feature.title}
+              description={feature.description}
+              accentColor={feature.accentColor}
+              delay={feature.delay}
+              frame={frame}
+              fps={fps}
+            />
+          ))}
         </div>
-
-        {/* Stat */}
-        <Sequence from={70}>
-          <div
-            style={{
-              marginTop: 20,
-              padding: "16px 24px",
-              background: "rgba(0,120,212,0.1)",
-              border: `1px solid ${COLORS.microsoftBlue}44`,
-              borderRadius: 12,
-              display: "inline-flex",
-              gap: 16,
-              alignItems: "center",
-            }}
-          >
-            <span style={{ fontSize: 36, fontWeight: 900, color: COLORS.microsoftBlue, fontFamily: "Arial, sans-serif" }}>
-              99.9%
-            </span>
-            <span style={{ fontSize: 14, color: COLORS.offWhite, fontFamily: "Arial, sans-serif", lineHeight: 1.4 }}>
-              SLA de<br />disponibilidad
-            </span>
-          </div>
-        </Sequence>
-      </div>
-
-      {/* Right panel: feature cards */}
-      <div
-        style={{
-          position: "absolute",
-          right: 80,
-          top: "50%",
-          transform: "translateY(-50%)",
-          width: 900,
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          gap: 16,
-        }}
-      >
-        {features.map((f) => (
-          <FeatureCard key={f.title} {...f} frame={frame} fps={fps} />
-        ))}
       </div>
     </AbsoluteFill>
   );
